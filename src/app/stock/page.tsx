@@ -11,9 +11,12 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { FileSpreadsheet, Search, Trash2 } from "lucide-react"
+
+import { FileSpreadsheet, Search, Trash2, Database, Loader2, Check } from "lucide-react"
 import * as XLSX from 'xlsx'
 import { useStockStore } from "@/store/useStockStore"
+import { supabase } from "@/lib/supabase"
+import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -25,7 +28,7 @@ import {
 import { StockItem } from "@/types/stock"
 
 export default function StockPage() {
-  const { 
+  const {
     stockData,
     setStockData,
     clearStockData,
@@ -53,11 +56,72 @@ export default function StockPage() {
     }
   }
 
-  const handleClearData = () => {
-    if (window.confirm('Tüm stok verilerini silmek istediğinize emin misiniz?')) {
-      clearStockData()
+  const handleClearData = async () => {
+    if (window.confirm('Tüm stok verilerini silmek istediğinize emin misiniz? Hem yerel hem de bulut (Supabase) verileri silinecektir.')) {
+      try {
+        const { error } = await supabase.from('stocks').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        if (error) {
+          console.error('Supabase silme hatası:', error);
+          alert('Bulut verileri silinirken bir hata oluştu.');
+        } else {
+          clearStockData();
+          alert('Veriler başarıyla temizlendi.');
+        }
+      } catch (e) {
+        console.error('Silme işlemi hatası:', e);
+      }
     }
   }
+
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  const handleStockSync = async () => {
+    if (stockData.length === 0) return;
+
+    setIsSyncing(true);
+    setSyncStatus('idle');
+
+    try {
+      // 1. Önce stocks tablosunu temizle
+      const { error: error1 } = await supabase.from('stocks').delete().neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+
+      if (error1) console.error('Stock delete error:', error1);
+
+      // 2. Stok verilerini parçalar halinde yükle (Batch insert)
+      const stockChunks = chunkArray(stockData, 100);
+      for (const chunk of stockChunks) {
+        const payload = chunk.map(item => ({
+          marka: item.Marka,
+          urun_grubu: item["Ürün Grubu"],
+          urun_kodu: item["Ürün Kodu"],
+          renk_kodu: item["Renk Kodu"],
+          beden: item.Beden,
+          envanter: item.Envanter,
+          barkod: item.Barkod,
+          sezon: item.Sezon
+        }));
+        const { error } = await supabase.from('stocks').insert(payload);
+        if (error) throw error;
+      }
+
+      setSyncStatus('success');
+      setTimeout(() => setSyncStatus('idle'), 3000);
+
+    } catch (error) {
+      console.error("Sync error:", error);
+      setSyncStatus('error');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  // Helper for batching
+  const chunkArray = (arr: any[], size: number) => {
+    return Array.from({ length: Math.ceil(arr.length / size) }, (v, i) =>
+      arr.slice(i * size, i * size + size)
+    );
+  };
 
   const filteredData = getFilteredData()
 
@@ -102,6 +166,30 @@ export default function StockPage() {
               Verileri Temizle
             </Button>
           )}
+
+          <Button
+            onClick={handleStockSync}
+            disabled={isSyncing || stockData.length === 0}
+            variant={syncStatus === 'error' ? "destructive" : "outline"}
+            className="gap-2 relative overflow-hidden ml-2"
+          >
+            {isSyncing ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Yükleniyor...
+              </>
+            ) : syncStatus === 'success' ? (
+              <>
+                <Check className="h-4 w-4 text-emerald-600" />
+                <span className="text-emerald-600">Yüklendi</span>
+              </>
+            ) : (
+              <>
+                <Database className="h-4 w-4" />
+                Stok Yedekle
+              </>
+            )}
+          </Button>
         </div>
       </div>
 

@@ -19,12 +19,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FileSpreadsheet, Trash2 } from "lucide-react";
+import { FileSpreadsheet, Trash2, Database, Loader2, Check } from "lucide-react";
 import * as XLSX from 'xlsx';
 import { useSalesStore, SalesItem } from "@/store/useSalesStore";
+import { supabase } from "@/lib/supabase";
+import { useState } from "react";
 
 export default function SalesPage() {
-  const { 
+  const {
     salesData,
     searchQuery,
     filterField,
@@ -52,8 +54,72 @@ export default function SalesPage() {
     }
   };
 
-  const handleClearData = () => {
-    clearSalesData();
+  const handleClearData = async () => {
+    if (window.confirm('Tüm satış verilerini silmek istediğinize emin misiniz? Hem yerel hem de bulut (Supabase) verileri silinecektir.')) {
+      try {
+        const { error } = await supabase.from('sales').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        if (error) {
+          console.error('Supabase silme hatası:', error);
+          alert('Bulut verileri silinirken bir hata oluştu.');
+        } else {
+          clearSalesData();
+          alert('Veriler başarıyla temizlendi.');
+        }
+      } catch (e) {
+        console.error('Silme işlemi hatası:', e);
+      }
+    }
+  };
+
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  const handleSalesSync = async () => {
+    if (salesData.length === 0) return;
+
+    setIsSyncing(true);
+    setSyncStatus('idle');
+
+    try {
+      // 1. Önce sales tablosunu temizle
+      const { error: error1 } = await supabase.from('sales').delete().neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+
+      if (error1) console.error('Sales delete error:', error1);
+
+      // 2. Satış verilerini parçalar halinde yükle
+      const salesChunks = chunkArray(salesData, 100);
+      for (const chunk of salesChunks) {
+        const payload = chunk.map(item => ({
+          marka: item.Marka,
+          urun_grubu: item["Ürün Grubu"],
+          urun_kodu: item["Ürün Kodu"],
+          renk_kodu: item["Renk Kodu"],
+          beden: item.Beden,
+          envanter: item.Envanter,
+          sezon: item.Sezon,
+          satis_miktari: item["Satış Miktarı"],
+          satis_vd: item["Satış (VD)"]
+        }));
+        const { error } = await supabase.from('sales').insert(payload);
+        if (error) throw error;
+      }
+
+      setSyncStatus('success');
+      setTimeout(() => setSyncStatus('idle'), 3000);
+
+    } catch (error) {
+      console.error("Sync error:", error);
+      setSyncStatus('error');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  // Helper for batching
+  const chunkArray = (arr: any[], size: number) => {
+    return Array.from({ length: Math.ceil(arr.length / size) }, (v, i) =>
+      arr.slice(i * size, i * size + size)
+    );
   };
 
   const filterOptions = [
@@ -98,82 +164,99 @@ export default function SalesPage() {
               Verileri Temizle
             </Button>
           )}
+
+          <Button
+            onClick={handleSalesSync}
+            disabled={isSyncing || salesData.length === 0}
+            variant={syncStatus === 'error' ? "destructive" : "outline"}
+            className="gap-2 relative overflow-hidden ml-2"
+          >
+            {isSyncing ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Yükleniyor...
+              </>
+            ) : syncStatus === 'success' ? (
+              <>
+                <Check className="h-4 w-4 text-emerald-600" />
+                <span className="text-emerald-600">Yüklendi</span>
+              </>
+            ) : (
+              <>
+                <Database className="h-4 w-4" />
+                Satışları Yedekle
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+      <div className="flex justify-between items-center mb-4">
+        <Input
+          placeholder="Ara..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="max-w-sm"
+        />
+        <div className="flex gap-2">
+          <Select value={filterField} onValueChange={(value) => setFilter(value, filterValue)}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filtre seçin" />
+            </SelectTrigger>
+            <SelectContent>
+              {filterOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {filterField !== "none" && (
+            <Input
+              placeholder="Filtre değeri..."
+              value={filterValue}
+              onChange={(e) => setFilter(filterField, e.target.value)}
+              className="w-[200px]"
+            />
+          )}
         </div>
       </div>
 
-      {salesData.length > 0 && (
-        <>
-          <div className="flex gap-4 mb-4">
-            <div className="flex-1">
-              <Input
-                placeholder="Ara..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="max-w-sm"
-              />
-            </div>
-            <div className="flex gap-2">
-              <Select value={filterField} onValueChange={(value) => setFilter(value, filterValue)}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filtre seçin" />
-                </SelectTrigger>
-                <SelectContent>
-                  {filterOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {filterField !== "none" && (
-                <Input
-                  placeholder="Filtre değeri..."
-                  value={filterValue}
-                  onChange={(e) => setFilter(filterField, e.target.value)}
-                  className="w-[200px]"
-                />
-              )}
-            </div>
+      <Card>
+        <ScrollArea className="h-[600px] rounded-md">
+          <div className="relative">
+            <Table>
+              <TableHeader className="sticky top-0 bg-background z-10">
+                <TableRow>
+                  <TableHead className="w-[150px]">Marka</TableHead>
+                  <TableHead className="w-[150px]">Ürün Grubu</TableHead>
+                  <TableHead className="w-[150px]">Ürün Kodu</TableHead>
+                  <TableHead className="w-[150px]">Renk Kodu</TableHead>
+                  <TableHead className="w-[100px]">Beden</TableHead>
+                  <TableHead className="w-[100px]">Envanter</TableHead>
+                  <TableHead className="w-[100px]">Sezon</TableHead>
+                  <TableHead className="w-[120px]">Satış Miktarı</TableHead>
+                  <TableHead className="w-[150px]">Satış (VD)</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredData.map((item, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{item.Marka}</TableCell>
+                    <TableCell>{item["Ürün Grubu"]}</TableCell>
+                    <TableCell>{item["Ürün Kodu"]}</TableCell>
+                    <TableCell>{item["Renk Kodu"]}</TableCell>
+                    <TableCell>{item.Beden}</TableCell>
+                    <TableCell>{item.Envanter}</TableCell>
+                    <TableCell>{item.Sezon}</TableCell>
+                    <TableCell>{item["Satış Miktarı"]}</TableCell>
+                    <TableCell>{item["Satış (VD)"]}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
-
-          <Card>
-            <ScrollArea className="h-[600px] rounded-md">
-              <div className="relative">
-                <Table>
-                  <TableHeader className="sticky top-0 bg-background z-10">
-                    <TableRow>
-                      <TableHead className="w-[150px]">Marka</TableHead>
-                      <TableHead className="w-[150px]">Ürün Grubu</TableHead>
-                      <TableHead className="w-[150px]">Ürün Kodu</TableHead>
-                      <TableHead className="w-[150px]">Renk Kodu</TableHead>
-                      <TableHead className="w-[100px]">Beden</TableHead>
-                      <TableHead className="w-[100px]">Envanter</TableHead>
-                      <TableHead className="w-[100px]">Sezon</TableHead>
-                      <TableHead className="w-[120px]">Satış Miktarı</TableHead>
-                      <TableHead className="w-[150px]">Satış (VD)</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredData.map((item, index) => (
-                      <TableRow key={index}>
-                        <TableCell>{item.Marka}</TableCell>
-                        <TableCell>{item["Ürün Grubu"]}</TableCell>
-                        <TableCell>{item["Ürün Kodu"]}</TableCell>
-                        <TableCell>{item["Renk Kodu"]}</TableCell>
-                        <TableCell>{item.Beden}</TableCell>
-                        <TableCell>{item.Envanter}</TableCell>
-                        <TableCell>{item.Sezon}</TableCell>
-                        <TableCell>{item["Satış Miktarı"]}</TableCell>
-                        <TableCell>{item["Satış (VD)"]}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </ScrollArea>
-          </Card>
-        </>
-      )}
+        </ScrollArea>
+      </Card>
     </div>
-  );
+  )
 } 

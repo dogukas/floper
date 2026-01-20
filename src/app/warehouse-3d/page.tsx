@@ -5,18 +5,14 @@ import {
     OrbitControls,
     Text,
     Environment,
-    ContactShadows,
     Float,
     useCursor,
-    PointerLockControls,
-    KeyboardControls,
-    PerspectiveCamera
+    PointerLockControls
 } from "@react-three/drei";
 import { useStockStore } from "@/store/useStockStore";
 import { useLayoutEffect, useRef, useState, useMemo, useEffect } from "react";
 import gsap from "gsap";
 import * as THREE from "three";
-import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -338,7 +334,6 @@ const PickingPath = ({ points }: { points: THREE.Vector3[] }) => {
 
 export default function Warehouse3D() {
     const stockData = useStockStore((state) => state.stockData);
-    const loading = useStockStore((state) => state.loading);
     const fetchStocks = useStockStore((state) => state.fetchStocks);
 
     const [selectedItem, setSelectedItem] = useState<any>(null);
@@ -350,7 +345,7 @@ export default function Warehouse3D() {
 
     useEffect(() => {
         fetchStocks();
-    }, []);
+    }, [fetchStocks]);
 
     // Simulate Picking Path
     const simulatePath = () => {
@@ -370,7 +365,7 @@ export default function Warehouse3D() {
 
         // Sort by nearest neighbor (Simple TSP)
         const sortedPoints = [new THREE.Vector3(0, 0, 15)]; // Start at "door"
-        let remaining = [...points];
+        const remaining = [...points];
 
         while (remaining.length > 0) {
             const current = sortedPoints[sortedPoints.length - 1];

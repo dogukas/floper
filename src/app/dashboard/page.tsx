@@ -8,7 +8,7 @@ import { ResponsivePie } from '@nivo/pie';
 import { ResponsiveBar } from '@nivo/bar';
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Package2, TrendingDown, TrendingUp, AlertCircle, Filter } from "lucide-react";
+import { Package2, TrendingDown, TrendingUp, AlertCircle, Filter, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState, useLayoutEffect, useRef, useEffect, useMemo } from "react";
 import gsap from "gsap";
@@ -16,6 +16,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Loader2, Database, Check } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Progress } from "@/components/ui/progress";
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
@@ -294,6 +302,10 @@ export default function DashboardPage() {
   const [showProductGroupFilter, setShowProductGroupFilter] = useState(false);
   const [productGroupNameFilter, setProductGroupNameFilter] = useState("");
 
+  // Brand Details Enhancements States
+  const [brandSearchTerm, setBrandSearchTerm] = useState("");
+  const [brandSortOption, setBrandSortOption] = useState<'stock' | 'sales' | 'turnover'>('stock');
+
   // Stok verisi hesaplamaları (Memoized)
   const {
     brandInventory,
@@ -318,7 +330,8 @@ export default function DashboardPage() {
     pieChartData,
     seasonChartData,
     seasonGroupChartData,
-    productGroupPieData
+    productGroupPieData,
+    brandMetrics // New comprehensive data
   } = useMemo(() => {
     // Benzersiz markaları, ürün gruplarını ve renk kodlarını elde etme
     const uniqueBrands = [...new Set(stockData.map(item => item.Marka))].sort();
@@ -493,6 +506,23 @@ export default function DashboardPage() {
       uniqueProducts: data.uniqueProducts.size
     }));
 
+    // Brand Metrics Calculation (Stock + Sales + Turnover)
+    const brandMetrics = Object.entries(brandInventory).map(([brand, stock]) => {
+      // Calculate total sales for this brand from salesData
+      const brandSales = salesData
+        .filter(sale => sale.Marka === brand)
+        .reduce((sum, sale) => sum + (Number(sale["Satış Miktarı"]) || 0), 0);
+
+      const turnoverRate = stock > 0 ? (brandSales / stock).toFixed(2) : "0.00";
+
+      return {
+        brand,
+        stock,
+        sales: brandSales,
+        turnoverRate: parseFloat(turnoverRate)
+      };
+    });
+
     return {
       brandInventory,
       uniqueBrands,
@@ -516,9 +546,10 @@ export default function DashboardPage() {
       pieChartData,
       seasonChartData,
       seasonGroupChartData,
-      productGroupPieData
+      productGroupPieData,
+      brandMetrics
     };
-  }, [stockData]);
+  }, [stockData, salesData]);
 
   // Satış analizi hesaplamaları (Memoized)
   const {
@@ -1705,55 +1736,79 @@ export default function DashboardPage() {
         <div className="mt-8">
           <Card className="w-full dashboard-card bg-white/80 backdrop-blur-md border border-slate-200/60 shadow-lg hover:shadow-xl transition-all duration-300">
             <CardHeader>
-              <CardTitle>Marka Stok Detayları</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Tüm markaların stok bilgileri
-              </p>
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <CardTitle>Marka Stok & Satış Analizi</CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Marka bazlı stok, satış ve devir hızı performansı
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Marka ara..."
+                      value={brandSearchTerm}
+                      onChange={(e) => setBrandSearchTerm(e.target.value)}
+                      className="pl-8 h-9 w-[200px]"
+                    />
+                  </div>
+                  <Select value={brandSortOption} onValueChange={(val: any) => setBrandSortOption(val)}>
+                    <SelectTrigger className="w-[160px] h-9">
+                      <SelectValue placeholder="Sıralama" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="stock">Stok Miktarı</SelectItem>
+                      <SelectItem value="sales">Satış Miktarı</SelectItem>
+                      <SelectItem value="turnover">Devir Hızı</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
-              <ScrollArea className="h-[400px] w-full pr-4">
-                <div className="space-y-2">
-                  {Object.entries(brandInventory)
-                    .sort(([, a], [, b]) => b - a)
-                    .map(([brand, total], index) => {
-                      // Toplam içindeki yüzde hesaplama
-                      const percentage = ((total / totalInventory) * 100).toFixed(1);
-
-                      // Marka için toplam ürün çeşidi sayısı
-                      const brandProducts = stockData.filter(item => item.Marka === brand);
-                      const uniqueProductCount = new Set(brandProducts.map(item => item["Ürün Kodu"])).size;
-
-                      // Renk hesaplama (ilk 6 marka için COLORS dizisinden, diğerleri için rastgele)
-                      const color = index < COLORS.length ? COLORS[index] : `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+              <ScrollArea className="h-[500px] w-full pr-4">
+                <div className="space-y-3">
+                  {brandMetrics
+                    .filter(metric => metric.brand.toLowerCase().includes(brandSearchTerm.toLowerCase()))
+                    .sort((a, b) => {
+                      if (brandSortOption === 'sales') return b.sales - a.sales;
+                      if (brandSortOption === 'turnover') return b.turnoverRate - a.turnoverRate;
+                      return b.stock - a.stock;
+                    })
+                    .map((metric, index) => {
+                      const maxStock = Math.max(...brandMetrics.map(m => m.stock));
+                      const maxSales = Math.max(...brandMetrics.map(m => m.sales));
 
                       return (
-                        <div key={index} className="flex items-center border border-gray-100 rounded-lg bg-white p-3 hover:bg-gray-50">
-                          <div className="w-4 h-4 rounded-full mr-3" style={{ backgroundColor: color }}></div>
-
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-gray-900">{brand}</div>
-                            <div className="flex items-center text-xs text-gray-500 mt-1">
-                              <span>{uniqueProductCount} çeşit ürün</span>
-                              <span className="mx-1">•</span>
-                              <span>Ortalama {(total / uniqueProductCount).toFixed(1)} stok/ürün</span>
+                        <div key={index} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white border border-slate-100 rounded-xl hover:bg-slate-50 transition-colors gap-4">
+                          {/* Brand Info & Stock */}
+                          <div className="flex-1 min-w-[200px]">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="font-semibold text-gray-900">{metric.brand}</span>
+                              <span className="text-sm font-bold text-blue-600">{metric.stock} Stok</span>
                             </div>
+                            <Progress value={(metric.stock / maxStock) * 100} className="h-2 bg-blue-100" />
                           </div>
 
-                          <div className="flex-1 px-4">
-                            <div className="flex items-center">
-                              <div className="w-full bg-gray-200 rounded-full h-2 mr-3">
-                                <div className="h-2 rounded-full" style={{
-                                  width: `${percentage}%`,
-                                  backgroundColor: color
-                                }}></div>
-                              </div>
-                              <span className="text-sm font-medium text-gray-700 w-12">%{percentage}</span>
+                          {/* Sales Info */}
+                          <div className="flex-1 min-w-[200px]">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm text-gray-500">Satış</span>
+                              <span className="text-sm font-bold text-green-600">{metric.sales} Adet</span>
                             </div>
+                            <Progress value={(metric.sales / maxSales) * 100} className="h-2 bg-green-100" />
                           </div>
 
-                          <div className="text-right">
-                            <div className="text-lg font-bold text-gray-900">{total}</div>
-                            <div className="text-xs text-gray-500">adet stok</div>
+                          {/* Turnover Rate */}
+                          <div className="flex items-center gap-4 min-w-[120px] justify-end">
+                            <div className="text-right">
+                              <span className="block text-xs text-muted-foreground">Devir Hızı</span>
+                              <Badge variant={metric.turnoverRate > 0.5 ? "default" : "secondary"}
+                                className={`${metric.turnoverRate > 1.0 ? "bg-green-500 hover:bg-green-600" : metric.turnoverRate > 0.5 ? "bg-blue-500 hover:bg-blue-600" : "bg-gray-200 text-gray-700 hover:bg-gray-300"}`}>
+                                {metric.turnoverRate}x
+                              </Badge>
+                            </div>
                           </div>
                         </div>
                       );

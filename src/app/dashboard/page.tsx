@@ -1459,7 +1459,7 @@ export default function DashboardPage() {
                 <div className="h-[400px]">
                   <ResponsivePie
                     data={seasonChartData}
-                    margin={{ top: 40, right: 120, bottom: 40, left: 120 }}
+                    margin={{ top: 40, right: 80, bottom: 80, left: 80 }}
                     innerRadius={0.5}
                     padAngle={0.7}
                     cornerRadius={3}
@@ -1481,16 +1481,16 @@ export default function DashboardPage() {
                     }}
                     legends={[
                       {
-                        anchor: 'right',
-                        direction: 'column',
+                        anchor: 'bottom',
+                        direction: 'row',
                         justify: false,
-                        translateX: 100,
-                        translateY: 0,
-                        itemsSpacing: 2,
+                        translateX: 0,
+                        translateY: 56,
+                        itemsSpacing: 0,
                         itemWidth: 100,
-                        itemHeight: 20,
+                        itemHeight: 18,
                         itemDirection: 'left-to-right',
-                        itemOpacity: 0.85,
+                        itemOpacity: 1,
                         symbolSize: 18,
                         symbolShape: 'circle'
                       }
@@ -1557,7 +1557,7 @@ export default function DashboardPage() {
                 <div className="h-[400px]">
                   <ResponsivePie
                     data={seasonGroupChartData}
-                    margin={{ top: 40, right: 120, bottom: 40, left: 120 }}
+                    margin={{ top: 40, right: 80, bottom: 80, left: 80 }}
                     innerRadius={0.5}
                     padAngle={0.7}
                     cornerRadius={3}
@@ -1579,16 +1579,16 @@ export default function DashboardPage() {
                     }}
                     legends={[
                       {
-                        anchor: 'right',
-                        direction: 'column',
+                        anchor: 'bottom',
+                        direction: 'row',
                         justify: false,
-                        translateX: 100,
-                        translateY: 0,
-                        itemsSpacing: 2,
+                        translateX: 0,
+                        translateY: 56,
+                        itemsSpacing: 0,
                         itemWidth: 100,
-                        itemHeight: 20,
+                        itemHeight: 18,
                         itemDirection: 'left-to-right',
-                        itemOpacity: 0.85,
+                        itemOpacity: 1,
                         symbolSize: 18,
                         symbolShape: 'circle'
                       }

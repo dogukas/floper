@@ -1,17 +1,14 @@
+/**
+ * Sales Store
+ * Zustand store for managing sales data with persistence
+ */
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { SalesItem } from '@/types/stock';
 
-export interface SalesItem {
-  Marka: string;
-  "Ürün Grubu": string;
-  "Ürün Kodu": string;
-  "Renk Kodu": string;
-  Beden: string;
-  Envanter: string;
-  Sezon: string;
-  "Satış Miktarı": number;
-  "Satış (VD)": string;
-}
+// ==========================================
+// STORE STATE INTERFACE
+// ==========================================
 
 interface SalesState {
   version: number;
@@ -26,7 +23,11 @@ interface SalesState {
   getFilteredData: () => SalesItem[];
 }
 
-interface PersistedState extends Omit<SalesState, 'getFilteredData'> {}
+type PersistedState = Omit<SalesState, 'getFilteredData'>;
+
+// ==========================================
+// STORE IMPLEMENTATION
+// ==========================================
 
 export const useSalesStore = create<SalesState>()(
   persist(
@@ -36,13 +37,18 @@ export const useSalesStore = create<SalesState>()(
       searchQuery: '',
       filterField: '',
       filterValue: '',
+
       setSalesData: (data) => set({ salesData: data }),
+
       clearSalesData: () => set({ salesData: [] }),
+
       setSearchQuery: (query) => set({ searchQuery: query }),
+
       setFilter: (field, value) => set({ filterField: field, filterValue: value }),
+
       getFilteredData: () => {
         const { salesData, searchQuery, filterField, filterValue } = get();
-        
+
         return salesData.filter((item) => {
           // Genel arama
           if (searchQuery) {
@@ -51,13 +57,13 @@ export const useSalesStore = create<SalesState>()(
               (value) => value != null && value.toString().toLowerCase().includes(searchLower)
             );
           }
-          
+
           // Spesifik alan filtresi
           if (filterField && filterValue) {
             const itemValue = item[filterField as keyof SalesItem];
             return itemValue != null && itemValue.toString().toLowerCase().includes(filterValue.toLowerCase());
           }
-          
+
           return true;
         });
       },
@@ -70,9 +76,9 @@ export const useSalesStore = create<SalesState>()(
         }
         return {
           getItem: () => null,
-          setItem: () => {},
-          removeItem: () => {}
-        }
+          setItem: () => { },
+          removeItem: () => { }
+        };
       }),
       version: 1,
       migrate: (persistedState: unknown, version: number) => {
@@ -89,4 +95,7 @@ export const useSalesStore = create<SalesState>()(
       },
     }
   )
-); 
+);
+
+// Re-export SalesItem for backward compatibility
+export type { SalesItem } from '@/types/stock';

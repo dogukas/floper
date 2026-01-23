@@ -1,21 +1,32 @@
+/**
+ * Dashboard Page
+ * Ana kontrol paneli - stok, satış ve marka analizleri
+ */
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { useStockStore } from "@/store/useStockStore";
-import { useSalesStore } from "@/store/useSalesStore";
-import type { StockItem } from "@/store/useStockStore";
+// ==========================================
+// REACT & HOOKS
+// ==========================================
+import { useState, useLayoutEffect, useRef, useEffect, useMemo } from "react";
+
+// ==========================================
+// EXTERNAL LIBRARIES
+// ==========================================
 import { ResponsivePie } from '@nivo/pie';
 import { ResponsiveBar } from '@nivo/bar';
+import gsap from "gsap";
+import * as XLSX from 'xlsx';
+
+// ==========================================
+// UI COMPONENTS
+// ==========================================
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Package2, TrendingDown, TrendingUp, AlertCircle, Filter, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useState, useLayoutEffect, useRef, useEffect, useMemo } from "react";
-import gsap from "gsap";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { Loader2, Database, Check } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Select,
   SelectContent,
@@ -23,169 +34,40 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Progress } from "@/components/ui/progress";
 
+// ==========================================
+// ICONS
+// ==========================================
+import {
+  Package2,
+  TrendingDown,
+  TrendingUp,
+  AlertCircle,
+  Filter,
+  Search,
+  FileDown,
+  Loader2,
+  Database,
+  Check
+} from "lucide-react";
+
+// ==========================================
+// INTERNAL COMPONENTS & UTILITIES
+// ==========================================
+import { LowStockItem, MediumStockItem, HighStockItem } from "@/components/dashboard";
+import { useStockStore } from "@/store/useStockStore";
+import { useSalesStore } from "@/store/useSalesStore";
+import { supabase } from "@/lib/supabase";
+
+// ==========================================
+// TYPES
+// ==========================================
+import type { StockItem, GroupedStockItem } from "@/types/stock";
+
+// ==========================================
+// CONSTANTS
+// ==========================================
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
-
-// Bileşenler için tip tanımlamaları
-interface StockItemProps {
-  item: {
-    Marka: string;
-    "Ürün Kodu": string;
-    "Ürün Grubu": string;
-    "Renk Kodu": string;
-    bedenler: Array<{ beden: string; envanter: number }>;
-    totalEnvanter: number;
-  };
-  index: number;
-}
-
-// LowStockItem bileşeni oluşturuluyor
-const LowStockItem = ({ item, index }: StockItemProps) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div className="bg-orange-50 rounded-lg border border-orange-100 overflow-hidden">
-      <div
-        className="flex items-center justify-between p-3 cursor-pointer"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <div>
-          <p className="font-medium text-orange-900">{item.Marka}</p>
-          <div className="flex gap-2 text-sm text-orange-600">
-            <span>{item["Ürün Kodu"]}</span>
-            <span>•</span>
-            <span>{item["Ürün Grubu"]}</span>
-          </div>
-          <div className="flex gap-2 text-xs text-orange-500 mt-1">
-            <span className="flex items-center gap-1">
-              <span className="font-medium">Renk:</span>
-              {item["Renk Kodu"]}
-            </span>
-          </div>
-        </div>
-        <div className="flex flex-col items-end">
-          <Badge variant="outline" className="bg-orange-100 text-orange-700">
-            {item.totalEnvanter} adet
-          </Badge>
-          <span className="text-xs text-orange-500 mt-1">{item.bedenler.length} beden</span>
-        </div>
-      </div>
-
-      {isOpen && (
-        <div className="px-3 pb-3 pt-1 border-t border-orange-100">
-          <div className="text-sm font-medium text-orange-800 mb-2">Beden Detayları:</div>
-          <div className="grid grid-cols-3 gap-2">
-            {item.bedenler.map((bedenItem, bedenIndex) => (
-              <div key={bedenIndex} className="bg-orange-100 rounded p-2 text-xs">
-                <div className="font-medium text-orange-800">{bedenItem.beden}</div>
-                <div className="text-orange-700">{bedenItem.envanter} adet</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// HighStockItem bileşeni oluşturuluyor
-const HighStockItem = ({ item, index }: StockItemProps) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div className="bg-green-50 rounded-lg border border-green-100 overflow-hidden">
-      <div
-        className="flex items-center justify-between p-3 cursor-pointer"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <div>
-          <p className="font-medium text-green-900">{item.Marka}</p>
-          <div className="flex gap-2 text-sm text-green-600">
-            <span>{item["Ürün Kodu"]}</span>
-            <span>•</span>
-            <span>{item["Ürün Grubu"]}</span>
-          </div>
-          <div className="flex gap-2 text-xs text-green-500 mt-1">
-            <span className="flex items-center gap-1">
-              <span className="font-medium">Renk:</span>
-              {item["Renk Kodu"]}
-            </span>
-          </div>
-        </div>
-        <div className="flex flex-col items-end">
-          <Badge variant="outline" className="bg-green-100 text-green-700">
-            {item.totalEnvanter} adet
-          </Badge>
-          <span className="text-xs text-green-500 mt-1">{item.bedenler.length} beden</span>
-        </div>
-      </div>
-
-      {isOpen && (
-        <div className="px-3 pb-3 pt-1 border-t border-green-100">
-          <div className="text-sm font-medium text-green-800 mb-2">Beden Detayları:</div>
-          <div className="grid grid-cols-3 gap-2">
-            {item.bedenler.map((bedenItem, bedenIndex) => (
-              <div key={bedenIndex} className="bg-green-100 rounded p-2 text-xs">
-                <div className="font-medium text-green-800">{bedenItem.beden}</div>
-                <div className="text-green-700">{bedenItem.envanter} adet</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// MediumStockItem bileşeni oluşturuluyor
-const MediumStockItem = ({ item, index }: StockItemProps) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div className="bg-blue-50 rounded-lg border border-blue-100 overflow-hidden">
-      <div
-        className="flex items-center justify-between p-3 cursor-pointer"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <div>
-          <p className="font-medium text-blue-900">{item.Marka}</p>
-          <div className="flex gap-2 text-sm text-blue-600">
-            <span>{item["Ürün Kodu"]}</span>
-            <span>•</span>
-            <span>{item["Ürün Grubu"]}</span>
-          </div>
-          <div className="flex gap-2 text-xs text-blue-500 mt-1">
-            <span className="flex items-center gap-1">
-              <span className="font-medium">Renk:</span>
-              {item["Renk Kodu"]}
-            </span>
-          </div>
-        </div>
-        <div className="flex flex-col items-end">
-          <Badge variant="outline" className="bg-blue-100 text-blue-700">
-            {item.totalEnvanter} adet
-          </Badge>
-          <span className="text-xs text-blue-500 mt-1">{item.bedenler.length} beden</span>
-        </div>
-      </div>
-
-      {isOpen && (
-        <div className="px-3 pb-3 pt-1 border-t border-blue-100">
-          <div className="text-sm font-medium text-blue-800 mb-2">Beden Detayları:</div>
-          <div className="grid grid-cols-3 gap-2">
-            {item.bedenler.map((bedenItem, bedenIndex) => (
-              <div key={bedenIndex} className="bg-blue-100 rounded p-2 text-xs">
-                <div className="font-medium text-blue-800">{bedenItem.beden}</div>
-                <div className="text-blue-700">{bedenItem.envanter} adet</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
 
 export default function DashboardPage() {
   const stockData: StockItem[] = useStockStore((state) => state.stockData);
@@ -306,6 +188,10 @@ export default function DashboardPage() {
   const [brandSearchTerm, setBrandSearchTerm] = useState("");
   const [brandSortOption, setBrandSortOption] = useState<'stock' | 'sales' | 'turnover'>('stock');
 
+  // Defensive check: Ensure data arrays exist (Component Level)
+  const safeStockData = useMemo(() => Array.isArray(stockData) ? stockData : [], [stockData]);
+  const safeSalesData = useMemo(() => Array.isArray(salesData) ? salesData : [], [salesData]);
+
   // Stok verisi hesaplamaları (Memoized)
   const {
     brandInventory,
@@ -334,28 +220,28 @@ export default function DashboardPage() {
     brandMetrics // New comprehensive data
   } = useMemo(() => {
     // Benzersiz markaları, ürün gruplarını ve renk kodlarını elde etme
-    const uniqueBrands = [...new Set(stockData.map(item => item.Marka))].sort();
-    const uniqueProductGroups = [...new Set(stockData.map(item => item["Ürün Grubu"]))].sort();
-    const uniqueColorCodes = [...new Set(stockData.map(item => item["Renk Kodu"]))].sort();
-    const uniqueSizes = [...new Set(stockData.map(item => item.Beden))].sort();
+    const uniqueBrands = [...new Set(safeStockData.map(item => item.Marka))].sort();
+    const uniqueProductGroups = [...new Set(safeStockData.map(item => item["Ürün Grubu"]))].sort();
+    const uniqueColorCodes = [...new Set(safeStockData.map(item => item["Renk Kodu"]))].sort();
+    const uniqueSizes = [...new Set(safeStockData.map(item => item.Beden))].sort();
 
     // Toplam stok ve benzersiz ürün sayıları
-    const totalProducts = stockData.length;
-    const totalInventory = stockData.reduce((sum, item) => sum + (parseInt(item.Envanter) || 0), 0);
-    const uniqueProducts = new Set(stockData.map(item => `${item["Ürün Kodu"]}-${item["Renk Kodu"]}`)).size;
+    const totalProducts = safeStockData.length;
+    const totalInventory = safeStockData.reduce((sum, item) => sum + (parseInt(item.Envanter) || 0), 0);
+    const uniqueProducts = new Set(safeStockData.map(item => `${item["Ürün Kodu"]}-${item["Renk Kodu"]}`)).size;
 
     // Stok durumu analizleri
-    const lowStock = stockData.filter(item => {
+    const lowStock = safeStockData.filter(item => {
       const stock = parseInt(item.Envanter) || 0;
       return stock >= 0 && stock <= 3;
     });
 
-    const mediumStock = stockData.filter(item => {
+    const mediumStock = safeStockData.filter(item => {
       const stock = parseInt(item.Envanter) || 0;
       return stock >= 4 && stock <= 6;
     });
 
-    const highStock = stockData.filter(item => {
+    const highStock = safeStockData.filter(item => {
       const stock = parseInt(item.Envanter) || 0;
       return stock >= 7;
     });
@@ -375,7 +261,7 @@ export default function DashboardPage() {
     const allCategoriesPercentage = totalInventory > 0 ? (totalCategorizedStock / totalInventory * 100).toFixed(1) : "0";
 
     // Marka bazında envanter dağılımı
-    const brandInventory = stockData.reduce((acc, item) => {
+    const brandInventory = safeStockData.reduce((acc, item) => {
       const brand = item.Marka;
       const inventory = parseInt(item.Envanter) || 0;
       acc[brand] = (acc[brand] || 0) + inventory;
@@ -389,7 +275,7 @@ export default function DashboardPage() {
     }));
 
     // Sezon bazında dağılım analizi
-    const seasonData = stockData.reduce((acc, item) => {
+    const seasonData = safeStockData.reduce((acc, item) => {
       const season = item.Sezon || 'Belirtilmemiş';
       if (!acc[season]) {
         acc[season] = {
@@ -433,7 +319,7 @@ export default function DashboardPage() {
       }));
 
     // Sezon bazında ürün grubu dağılımı
-    const seasonGroupData = stockData.reduce((acc, item) => {
+    const seasonGroupData = safeStockData.reduce((acc, item) => {
       const season = item.Sezon || 'Belirtilmemiş';
       const group = item["Ürün Grubu"] || 'Belirtilmemiş';
 
@@ -479,7 +365,7 @@ export default function DashboardPage() {
       }));
 
     // Ürün grubu bazında envanter dağılımı
-    const productGroupInventory = stockData.reduce((acc, item) => {
+    const productGroupInventory = safeStockData.reduce((acc, item) => {
       const group = item["Ürün Grubu"] || 'Belirtilmemiş';
       const inventory = parseInt(item.Envanter) || 0;
 
@@ -506,10 +392,14 @@ export default function DashboardPage() {
       uniqueProducts: data.uniqueProducts.size
     }));
 
+
+
+
+
     // Brand Metrics Calculation (Stock + Sales + Turnover)
-    const brandMetrics = Object.entries(brandInventory).map(([brand, stock]) => {
-      // Calculate total sales for this brand from salesData
-      const brandSales = salesData
+    const brandMetrics = Object.entries(brandInventory || {}).map(([brand, stock]) => {
+      // Calculate total sales for this brand from safeSalesData
+      const brandSales = (safeSalesData || [])
         .filter(sale => sale.Marka === brand)
         .reduce((sum, sale) => sum + (Number(sale["Satış Miktarı"]) || 0), 0);
 
@@ -549,7 +439,7 @@ export default function DashboardPage() {
       productGroupPieData,
       brandMetrics
     };
-  }, [stockData, salesData]);
+  }, [safeStockData, safeSalesData]);
 
   // Satış analizi hesaplamaları (Memoized)
   const {
@@ -562,7 +452,7 @@ export default function DashboardPage() {
     productGroupSalesQuantityData
   } = useMemo(() => {
     // Marka bazında satış dağılımı analizi
-    const brandSalesData = salesData.reduce((acc, item) => {
+    const brandSalesData = safeSalesData.reduce((acc, item) => {
       const brand = item.Marka;
       let salesAmount = 0;
 
@@ -582,7 +472,7 @@ export default function DashboardPage() {
     }, {} as Record<string, number>);
 
     // Marka bazında satış adedi dağılımı analizi
-    const brandSalesQuantityData = salesData.reduce((acc, item) => {
+    const brandSalesQuantityData = safeSalesData.reduce((acc, item) => {
       const brand = item.Marka;
       const salesQuantity = Number(item["Satış Miktarı"]) || 0;
       acc[brand] = (acc[brand] || 0) + salesQuantity;
@@ -597,7 +487,7 @@ export default function DashboardPage() {
     }));
 
     // Sezon bazında satış dağılımı analizi
-    const seasonSalesData = salesData.reduce((acc, item) => {
+    const seasonSalesData = safeSalesData.reduce((acc, item) => {
       const season = item.Sezon || 'Belirtilmemiş';
       let salesAmount = 0;
 
@@ -617,7 +507,7 @@ export default function DashboardPage() {
     }, {} as Record<string, number>);
 
     // Sezon bazında satış adedi dağılımı analizi
-    const seasonSalesQuantityData = salesData.reduce((acc, item) => {
+    const seasonSalesQuantityData = safeSalesData.reduce((acc, item) => {
       const season = item.Sezon || 'Belirtilmemiş';
       const salesQuantity = Number(item["Satış Miktarı"]) || 0;
       acc[season] = (acc[season] || 0) + salesQuantity;
@@ -625,7 +515,7 @@ export default function DashboardPage() {
     }, {} as Record<string, number>);
 
     // Ürün grubu bazında satış dağılımı analizi
-    const productGroupSalesData = salesData.reduce((acc, item) => {
+    const productGroupSalesData = safeSalesData.reduce((acc, item) => {
       const group = item["Ürün Grubu"] || 'Belirtilmemiş';
       let salesAmount = 0;
 
@@ -645,7 +535,7 @@ export default function DashboardPage() {
     }, {} as Record<string, number>);
 
     // Ürün grubu bazında satış adedi dağılımı analizi
-    const productGroupSalesQuantityData = salesData.reduce((acc, item) => {
+    const productGroupSalesQuantityData = safeSalesData.reduce((acc, item) => {
       const group = item["Ürün Grubu"] || 'Belirtilmemiş';
       const salesQuantity = Number(item["Satış Miktarı"]) || 0;
       acc[group] = (acc[group] || 0) + salesQuantity;
@@ -661,10 +551,26 @@ export default function DashboardPage() {
       productGroupSalesData,
       productGroupSalesQuantityData
     };
-  }, [salesData]);
+  }, [safeSalesData]);
+
+  // Excel Export Handler
+  const exportBrandMetrics = () => {
+    const dataToExport = brandMetrics.map(item => ({
+      Marka: item.brand,
+      'Stok Adedi': item.stock,
+      'Satış Adedi': item.sales,
+      'Devir Hızı': item.turnoverRate,
+      'Performans': item.turnoverRate > 1.0 ? 'A Grubu' : item.turnoverRate > 0.5 ? 'B Grubu' : 'C Grubu'
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Marka Analizi");
+    XLSX.writeFile(wb, "Floper_Marka_Analizi.xlsx");
+  };
 
   return (
-    <div ref={containerRef} className="relative min-h-screen bg-gradient-to-br from-slate-100 via-indigo-50 to-orange-50">
+    <div ref={containerRef} className="dashboard-container relative min-h-screen bg-slate-50/50 pb-20 overflow-x-hidden">
       {/* Decorative background blobs */}
       <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-white/0 to-white/0 overflow-hidden -z-10">
         <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-200/30 rounded-full blur-[100px]" />
@@ -863,17 +769,9 @@ export default function DashboardPage() {
               <ScrollArea className="h-[300px] w-full pr-4">
                 <div className="space-y-2">
                   {(() => {
-                    // SKU bazında birleştirme
-                    interface GroupedItem {
-                      Marka: string;
-                      "Ürün Kodu": string;
-                      "Ürün Grubu": string;
-                      "Renk Kodu": string;
-                      bedenler: Array<{ beden: string; envanter: number }>;
-                      totalEnvanter: number;
-                    }
+                    // SKU bazında birleştirme - GroupedStockItem tipini kullanır
 
-                    const skuGroups = lowStock.reduce((acc: Record<string, GroupedItem>, item) => {
+                    const skuGroups = lowStock.reduce((acc: Record<string, GroupedStockItem>, item) => {
                       // Sadece 0-3 adet arasındaki ürünleri dahil et
                       const envanter = parseInt(item.Envanter) || 0;
                       if (envanter < 0 || envanter > 3) return acc;
@@ -1020,17 +918,9 @@ export default function DashboardPage() {
               <ScrollArea className="h-[300px] w-full pr-4">
                 <div className="space-y-2">
                   {(() => {
-                    // SKU bazında birleştirme
-                    interface GroupedItem {
-                      Marka: string;
-                      "Ürün Kodu": string;
-                      "Ürün Grubu": string;
-                      "Renk Kodu": string;
-                      bedenler: Array<{ beden: string; envanter: number }>;
-                      totalEnvanter: number;
-                    }
+                    // SKU bazında birleştirme - GroupedStockItem tipini kullanır
 
-                    const skuGroups = highStock.reduce((acc: Record<string, GroupedItem>, item) => {
+                    const skuGroups = highStock.reduce((acc: Record<string, GroupedStockItem>, item) => {
                       // Sadece 7 ve üzeri ürünleri dahil et
                       const envanter = parseInt(item.Envanter) || 0;
                       if (envanter < 7) return acc;
@@ -1177,17 +1067,9 @@ export default function DashboardPage() {
               <ScrollArea className="h-[300px] w-full pr-4">
                 <div className="space-y-2">
                   {(() => {
-                    // SKU bazında birleştirme
-                    interface GroupedItem {
-                      Marka: string;
-                      "Ürün Kodu": string;
-                      "Ürün Grubu": string;
-                      "Renk Kodu": string;
-                      bedenler: Array<{ beden: string; envanter: number }>;
-                      totalEnvanter: number;
-                    }
+                    // SKU bazında birleştirme - GroupedStockItem tipini kullanır
 
-                    const skuGroups = mediumStock.reduce((acc: Record<string, GroupedItem>, item) => {
+                    const skuGroups = mediumStock.reduce((acc: Record<string, GroupedStockItem>, item) => {
                       // Sadece 4-6 adet arasındaki ürünleri dahil et
                       const envanter = parseInt(item.Envanter) || 0;
                       if (envanter < 4 || envanter > 6) return acc;
@@ -1744,6 +1626,15 @@ export default function DashboardPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 gap-2 text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700"
+                    onClick={exportBrandMetrics}
+                  >
+                    <FileDown className="h-4 w-4" />
+                    <span className="hidden sm:inline">Excel'e Aktar</span>
+                  </Button>
                   <div className="relative">
                     <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -1771,7 +1662,7 @@ export default function DashboardPage() {
                 <div className="space-y-3">
                   {brandMetrics
                     .filter(metric => metric.brand.toLowerCase().includes(brandSearchTerm.toLowerCase()))
-                    .sort((a, b) => {
+                    .sort((a: any, b: any) => {
                       if (brandSortOption === 'sales') return b.sales - a.sales;
                       if (brandSortOption === 'turnover') return b.turnoverRate - a.turnoverRate;
                       return b.stock - a.stock;

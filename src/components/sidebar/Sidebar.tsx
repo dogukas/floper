@@ -53,6 +53,11 @@ export function Sidebar({ className }: SidebarProps) {
       href: "/stock",
     },
     {
+      title: "Stok Sayım",
+      icon: <ClipboardList size={20} />,
+      href: "/stock-counting",
+    },
+    {
       title: "3D Depo",
       icon: <Box size={20} />,
       href: "/warehouse-3d",

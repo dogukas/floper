@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from 'react';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
 /**
  * Hook to detect page navigation loading state
@@ -10,7 +10,6 @@ import { usePathname, useSearchParams } from 'next/navigation';
 export function usePageLoading() {
     const [isLoading, setIsLoading] = useState(false);
     const pathname = usePathname();
-    const searchParams = useSearchParams();
 
     useEffect(() => {
         // Start loading
@@ -22,7 +21,7 @@ export function usePageLoading() {
         }, 500);
 
         return () => clearTimeout(timeout);
-    }, [pathname, searchParams]);
+    }, [pathname]);
 
     return isLoading;
 }

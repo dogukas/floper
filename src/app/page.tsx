@@ -43,7 +43,7 @@ export default function Home() {
         </h1>
         <div ref={contentRef} className="space-y-4 backdrop-blur-sm bg-slate-900/10 p-10 rounded-lg border border-slate-700/20 shadow-2xl">
           <p className="text-xl text-slate-300 font-light tracking-wide">
-            © 2025 Doğukan Tevfik Sağıroğlu
+            © 2026 Doğukan Tevfik Sağıroğlu
           </p>
           <div className="w-16 h-px mx-auto bg-gradient-to-r from-transparent via-slate-500 to-transparent" />
           <p className="text-lg text-slate-400 tracking-wider uppercase">

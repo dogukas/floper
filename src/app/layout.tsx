@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { Sidebar } from "@/components/sidebar/Sidebar";
+import ClientLayout from "@/components/ClientLayout";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Flope",
-  description: "Modern web uygulaması",
+  title: "Flope ERP",
+  description: "Modern Enterprise Resource Planning System",
 };
 
 export default function RootLayout({
@@ -18,10 +18,7 @@ export default function RootLayout({
   return (
     <html lang="tr">
       <body className={inter.className}>
-        <div className="flex">
-          <Sidebar />
-          <main className="flex-1">{children}</main>
-        </div>
+        <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
   );

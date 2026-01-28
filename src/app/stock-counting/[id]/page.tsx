@@ -4,7 +4,7 @@
  */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -57,6 +57,7 @@ export default function CountingDetailPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [currentEvent, setCurrentEvent] = useState<CountingEvent | null>(null);
     const [eventDetails, setEventDetails] = useState<CountingDetail[]>([]);
+    const searchInputRef = useRef<HTMLInputElement>(null);
 
     // Pagination
     const [currentPage, setCurrentPage] = useState(1);
@@ -79,6 +80,20 @@ export default function CountingDetailPage() {
             setCurrentPage(1);
         }
     }, [eventId, countingDetails, getDetailsByEventId, currentPage, itemsPerPage]);
+
+    // Keyboard shortcuts
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // "/" - Focus search (only if not already in an input)
+            if (e.key === '/' && e.target === document.body) {
+                e.preventDefault();
+                searchInputRef.current?.focus();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
 
     // Start counting
     const handleStartCounting = () => {
@@ -378,7 +393,8 @@ export default function CountingDetailPage() {
                         <div className="flex-1 relative">
                             <ScanBarcode className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-600" />
                             <Input
-                                placeholder="Barkod okuyucu ile tarayın veya arama yapın (marka, ürün kodu, barkod)..."
+                                ref={searchInputRef}
+                                placeholder="Barkod okuyucu ile tarayın veya arama yapın (Kısayol: /)..."
                                 value={searchQuery}
                                 onChange={(e) => {
                                     const value = e.target.value;
@@ -447,17 +463,32 @@ export default function CountingDetailPage() {
                 </CardHeader>
                 <CardContent>
                     {filteredDetails.length === 0 ? (
-                        <div className="text-center py-12">
-                            <Package className="mx-auto h-12 w-12 text-muted-foreground" />
-                            <h3 className="mt-4 text-lg font-semibold">
-                                {searchQuery ? "Sonuç bulunamadı" : "Henüz ürün eklenmedi"}
+                        <div className="text-center py-16">
+                            {/* Gradient Icon Background */}
+                            <div className="relative mx-auto w-32 h-32 mb-6">
+                                <div className="absolute inset-0 bg-gradient-to-br from-blue-400 via-indigo-400 to-purple-400 rounded-full opacity-20 animate-pulse" />
+                                <div className="absolute inset-2 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-500 rounded-full flex items-center justify-center">
+                                    <Package className="h-16 w-16 text-white" />
+                                </div>
+                            </div>
+
+                            {/* Text Content */}
+                            <h3 className="text-2xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                                {searchQuery ? "Sonuç Bulunamadı" : "Henüz Ürün Eklenmedi"}
                             </h3>
-                            <p className="text-muted-foreground mt-2">
+                            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
                                 {searchQuery
-                                    ? "Arama kriterlerinizi değiştirip tekrar deneyin"
-                                    : "Sayım başladığında ürünler listelenecek"
+                                    ? "Farklı arama terimleri deneyerek yeniden arayabilirsiniz"
+                                    : '"Sayımı Başlat" butonuna tıklayarak ürünleri listeleyebilirsiniz'
                                 }
                             </p>
+
+                            {/* Keyboard Hints */}
+                            {!searchQuery && (
+                                <div className="mt-4 text-xs text-muted-foreground">
+                                    <kbd className="px-2 py-1 bg-muted rounded border">/</kbd> ile arama yapabilirsiniz
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <>
@@ -482,7 +513,10 @@ export default function CountingDetailPage() {
                                         const color = getDiscrepancyColor(severity);
 
                                         return (
-                                            <TableRow key={detail.id}>
+                                            <TableRow
+                                                key={detail.id}
+                                                className="hover:bg-accent/50 transition-colors duration-150"
+                                            >
                                                 <TableCell className="font-medium">
                                                     <div>
                                                         <div>{detail.marka}</div>

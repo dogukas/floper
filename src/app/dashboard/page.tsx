@@ -577,7 +577,7 @@ export default function DashboardPage() {
         <div className="absolute top-[10%] right-[-10%] w-[400px] h-[400px] bg-orange-200/30 rounded-full blur-[100px]" />
       </div>
 
-      <div className="container mx-auto p-8 space-y-8 relative z-10">
+      <div className="container mx-auto p-4 md:p-6 lg:p-8 space-y-8 relative z-10">
         <div className="dashboard-header flex justify-between items-center">
           <div>
             <h1 className="text-4xl font-light tracking-tight text-slate-900">Stok Yönetim Paneli</h1>

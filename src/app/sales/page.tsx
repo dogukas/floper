@@ -135,7 +135,7 @@ export default function SalesPage() {
   const filteredData = getFilteredData();
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto py-4 md:py-6 lg:py-8 px-4 md:px-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Satış Analiz</h1>
         <div className="flex gap-2">

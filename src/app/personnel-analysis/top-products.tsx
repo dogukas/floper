@@ -38,7 +38,7 @@ export function TopProductsList() {
     const savedData = localStorage.getItem('salesData');
     if (savedData) {
       const salesData = JSON.parse(savedData) as SalesDataItem[];
-      
+
       // Verileri işle
       processExcelData(salesData);
       setDataLoaded(true);
@@ -49,33 +49,33 @@ export function TopProductsList() {
   const processExcelData = (salesData: SalesDataItem[]) => {
     // Log ekleyelim
     console.log(`Toplam veri sayısı: ${salesData.length}`);
-    
+
     // Ayakkabı markalarını tanımla
     const shoeMarks = [
-      'ADIDAS', 'NIKE', 'NEW BALANCE', 'CONVERSE', 'PUMA', 
+      'ADIDAS', 'NIKE', 'NEW BALANCE', 'CONVERSE', 'PUMA',
       'REEBOK', 'VANS', 'ASICS', 'UNDER ARMOUR', 'SKECHERS'
     ];
-    
+
     // Önişleme: Tüm verilerde, eğer ürün grubu belirtilmemiş ama marka ayakkabı markasıysa,
     // o ürünü "Ayakkabı" olarak etiketle
     const processedData = salesData.map(item => {
-      const newItem = {...item};
-      
+      const newItem = { ...item };
+
       // Ürün grubu yoksa veya boşsa ve marka ayakkabı markasıysa
-      if ((!newItem.urunGrubu || newItem.urunGrubu.trim() === '') && 
-          shoeMarks.some(mark => newItem.marka.toUpperCase().includes(mark))) {
+      if ((!newItem.urunGrubu || newItem.urunGrubu.trim() === '') &&
+        shoeMarks.some(mark => newItem.marka.toUpperCase().includes(mark))) {
         newItem.urunGrubu = 'Ayakkabı';
       }
       return newItem;
     });
-    
+
     // Ürünleri kodlarına göre gruplandır
     const productsBySku: Record<string, ProductSummary> = {};
-    
+
     // Tüm ürünleri birleştir
     processedData.forEach(item => {
       const key = `${item.urunKodu}-${item.renkKodu}`;
-      
+
       // Eğer ürün daha önce eklenmemişse, ekle
       if (!productsBySku[key]) {
         productsBySku[key] = {
@@ -89,104 +89,104 @@ export function TopProductsList() {
           urunGrubu: item.urunGrubu || ""
         };
       }
-      
+
       // Satış miktarını ve tutarını ekle
       productsBySku[key].toplamAdet += item.satisAdeti;
       productsBySku[key].toplamTutar += item.satisAdeti * item.satisFiyati;
     });
-    
+
     // Tüm ürünleri diziye dönüştür
     const allProducts = Object.values(productsBySku);
-    console.log(`Toplam benzersiz ürün sayısı: ${allProducts.length}`);
-    
+    // Convert to array
+
     // Ayakkabı ürünlerini filtrele
     const shoes = allProducts.filter(product => {
       const isShoeProduct = isShoe(product.marka, product.urunKodu, product.urunGrubu || "");
-      
+
       // Debug - ayakkabı olarak belirlenen ürünleri kontrol et
       if (isShoeProduct) {
         console.log(`Ayakkabı olarak belirlenen: ${product.marka} - ${product.urunKodu} - Grup: ${product.urunGrubu}`);
       }
-      
+
       return isShoeProduct;
     });
-    
-    console.log(`Ayakkabı olarak belirlenen ürün sayısı: ${shoes.length}`);
-    
+
+    // Filter complete
+
     // Hiç ayakkabı bulunamadıysa, bilinen ayakkabı markalarına ait ürünleri de dahil et
     if (shoes.length === 0) {
       console.log("Hiç ayakkabı bulunamadı, ayakkabı markaları kullanılarak yeniden filtreleniyor");
-      
-      const shoesByBrand = allProducts.filter(product => 
+
+      const shoesByBrand = allProducts.filter(product =>
         shoeMarks.some(mark => product.marka.toUpperCase().includes(mark))
       );
-      
+
       if (shoesByBrand.length > 0) {
         console.log(`Marka bazlı ${shoesByBrand.length} ayakkabı bulundu`);
-        
+
         // Adet bazında sırala ve ilk 10'u al
         const sortedShoesByQuantity = [...shoesByBrand]
           .sort((a, b) => b.toplamAdet - a.toplamAdet)
           .slice(0, 10)
-          .map((item, index) => ({...item, sira: index + 1}));
-        
+          .map((item, index) => ({ ...item, sira: index + 1 }));
+
         // Ciro bazında sırala ve ilk 10'u al
         const sortedShoesByRevenue = [...shoesByBrand]
           .sort((a, b) => b.toplamTutar - a.toplamTutar)
           .slice(0, 10)
-          .map((item, index) => ({...item, sira: index + 1}));
-        
+          .map((item, index) => ({ ...item, sira: index + 1 }));
+
         // State'i güncelle
         setTopShoesByQuantity(sortedShoesByQuantity);
         setTopShoesByRevenue(sortedShoesByRevenue);
         return;
       }
     }
-    
+
     // Adet bazında sırala ve ilk 10'u al
     const sortedShoesByQuantity = [...shoes]
       .sort((a, b) => b.toplamAdet - a.toplamAdet)
       .slice(0, 10)
-      .map((item, index) => ({...item, sira: index + 1}));
-    
+      .map((item, index) => ({ ...item, sira: index + 1 }));
+
     // Ciro bazında sırala ve ilk 10'u al
     const sortedShoesByRevenue = [...shoes]
       .sort((a, b) => b.toplamTutar - a.toplamTutar)
       .slice(0, 10)
-      .map((item, index) => ({...item, sira: index + 1}));
-    
+      .map((item, index) => ({ ...item, sira: index + 1 }));
+
     // State'i güncelle
     setTopShoesByQuantity(sortedShoesByQuantity);
     setTopShoesByRevenue(sortedShoesByRevenue);
   };
-  
+
   // Ayakkabı olup olmadığını kontrol eden yardımcı fonksiyon
   const isShoe = (marka: string, urunKodu: string, urunGrubu: string): boolean => {
     const shoeMarks = [
-      'ADIDAS', 'NIKE', 'NEW BALANCE', 'CONVERSE', 'PUMA', 
+      'ADIDAS', 'NIKE', 'NEW BALANCE', 'CONVERSE', 'PUMA',
       'REEBOK', 'VANS', 'ASICS', 'UNDER ARMOUR', 'SKECHERS'
     ];
-    
+
     // Ürün grubu kontrol (öncelikli kriter)
     if (urunGrubu && (
-        urunGrubu.toLowerCase().includes('ayakkabı') || 
-        urunGrubu.toLowerCase().includes('ayakkabi') ||
-        urunGrubu.toLowerCase().includes('shoe') ||
-        urunGrubu.toLowerCase().includes('sneak') ||
-        urunGrubu.toLowerCase().includes('bot') ||
-        urunGrubu.toLowerCase().includes('boot') ||
-        urunGrubu.toLowerCase().includes('foot')
-      )) {
+      urunGrubu.toLowerCase().includes('ayakkabı') ||
+      urunGrubu.toLowerCase().includes('ayakkabi') ||
+      urunGrubu.toLowerCase().includes('shoe') ||
+      urunGrubu.toLowerCase().includes('sneak') ||
+      urunGrubu.toLowerCase().includes('bot') ||
+      urunGrubu.toLowerCase().includes('boot') ||
+      urunGrubu.toLowerCase().includes('foot')
+    )) {
       return true;
     }
-    
+
     // Marka ayakkabı markası ise veya ürün kodu ayakkabı koşullarını sağlıyorsa
-    return shoeMarks.some(mark => marka.toUpperCase().includes(mark)) || 
-           urunKodu.toUpperCase().includes('SHOE') ||
-           urunKodu.toUpperCase().includes('AYAKKABI') ||
-           urunKodu.toUpperCase().includes('BOT') ||
-           urunKodu.toUpperCase().includes('BOOT') ||
-           urunKodu.toUpperCase().includes('SNEAK');
+    return shoeMarks.some(mark => marka.toUpperCase().includes(mark)) ||
+      urunKodu.toUpperCase().includes('SHOE') ||
+      urunKodu.toUpperCase().includes('AYAKKABI') ||
+      urunKodu.toUpperCase().includes('BOT') ||
+      urunKodu.toUpperCase().includes('BOOT') ||
+      urunKodu.toUpperCase().includes('SNEAK');
   };
 
   return (
@@ -201,7 +201,7 @@ export function TopProductsList() {
           </div>
           <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Ayakkabı Top 10 Listeleri</h2>
         </div>
-        
+
         {dataLoaded ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Adet Bazında Top 10 */}
@@ -238,8 +238,8 @@ export function TopProductsList() {
                               {item.toplamAdet}
                             </TableCell>
                             <TableCell className="py-1 text-right">
-                              {new Intl.NumberFormat('tr-TR', { 
-                                style: 'currency', 
+                              {new Intl.NumberFormat('tr-TR', {
+                                style: 'currency',
                                 currency: 'TRY',
                                 maximumFractionDigits: 0
                               }).format(item.toplamTutar)}
@@ -252,8 +252,8 @@ export function TopProductsList() {
                             {topShoesByQuantity.reduce((sum, item) => sum + item.toplamAdet, 0)}
                           </TableCell>
                           <TableCell className="py-1 text-right font-bold text-green-900">
-                            {new Intl.NumberFormat('tr-TR', { 
-                              style: 'currency', 
+                            {new Intl.NumberFormat('tr-TR', {
+                              style: 'currency',
                               currency: 'TRY',
                               maximumFractionDigits: 0
                             }).format(topShoesByQuantity.reduce((sum, item) => sum + item.toplamTutar, 0))}
@@ -303,8 +303,8 @@ export function TopProductsList() {
                             <TableCell className="py-1 font-medium">{item.marka}</TableCell>
                             <TableCell className="py-1">{item.urunKodu}</TableCell>
                             <TableCell className="py-1 text-right font-bold text-blue-700">
-                              {new Intl.NumberFormat('tr-TR', { 
-                                style: 'currency', 
+                              {new Intl.NumberFormat('tr-TR', {
+                                style: 'currency',
                                 currency: 'TRY',
                                 maximumFractionDigits: 0
                               }).format(item.toplamTutar)}
@@ -317,8 +317,8 @@ export function TopProductsList() {
                         <TableRow className="bg-blue-100">
                           <TableCell colSpan={3} className="text-right py-1 font-medium">TOPLAM</TableCell>
                           <TableCell className="py-1 text-right font-bold text-blue-900">
-                            {new Intl.NumberFormat('tr-TR', { 
-                              style: 'currency', 
+                            {new Intl.NumberFormat('tr-TR', {
+                              style: 'currency',
                               currency: 'TRY',
                               maximumFractionDigits: 0
                             }).format(topShoesByRevenue.reduce((sum, item) => sum + item.toplamTutar, 0))}

@@ -140,24 +140,18 @@ export default function CountingDetailPage() {
 
     // Handle barcode scan
     const handleBarcodeScan = (barcode: string) => {
-        console.log("🔍 Barcode scanned:", barcode);
-        console.log("📊 Available details:", eventDetails.length);
-        if (eventDetails.length > 0) {
-            console.log("🏷️ Sample barcodes:", eventDetails.slice(0, 5).map(d => d.barkod));
-        } else {
-            console.warn("⚠️ No details loaded! Did you click 'Sayımı Başlat'?");
-        }
+        // Barcode scanned - no logging needed
 
         // Find the detail with this barcode
         const detail = eventDetails.find((d) => d.barkod === barcode);
 
         if (!detail) {
-            console.error("❌ Barcode not found:", barcode);
+            // Barcode not found - show alert to user
             alert(`❌ Barkod bulunamadı: ${barcode}\n\n📊 Durum:\n• Toplam ürün: ${eventDetails.length}\n• Önce "Sayımı Başlat" butonuna tıkladınız mı?`);
             return;
         }
 
-        console.log("✅ Detail found:", detail.marka, detail.urun_kodu);
+        // Detail found - proceed with counting
 
         // Increment counted quantity
         const newCountedQty = detail.counted_quantity + 1;
@@ -183,7 +177,7 @@ export default function CountingDetailPage() {
             discrepancy_count: discrepancies,
         });
 
-        console.log(`✅ Sayıldı: ${detail.marka} ${detail.urun_kodu} - ${newCountedQty} adet`);
+        // Item counted successfully
     };
 
     // Handle manual count input

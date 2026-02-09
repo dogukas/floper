@@ -127,15 +127,6 @@ export default function Home() {
             </div>
           </div>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => router.push("/dashboard")}
-            className="bg-white/5 border-white/20 text-white hover:bg-white/10 backdrop-blur-sm hidden md:flex"
-          >
-            Giriş Yap
-            <ChevronRight className="ml-1 w-4 h-4" />
-          </Button>
         </div>
       </header>
 

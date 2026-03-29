@@ -1,11 +1,11 @@
 "use client"
 
-import { Inter } from "next/font/google";
+import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/sidebar/Sidebar";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
 import { usePageLoading } from "@/hooks/usePageLoading";
 
-const inter = Inter({ subsets: ["latin"] });
+const NO_SIDEBAR_PATHS = ["/", "/login"];
 
 export default function ClientLayout({
     children,
@@ -13,12 +13,14 @@ export default function ClientLayout({
     children: React.ReactNode;
 }) {
     const isLoading = usePageLoading();
+    const pathname = usePathname();
+    const showSidebar = !NO_SIDEBAR_PATHS.includes(pathname);
 
     return (
         <>
             <LoadingOverlay isLoading={isLoading} />
             <div className="flex">
-                <Sidebar />
+                {showSidebar && <Sidebar />}
                 <main className="flex-1">{children}</main>
             </div>
         </>

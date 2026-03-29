@@ -136,15 +136,16 @@ export default function DashboardPage() {
       // Header Animation
       gsap.from(".dashboard-header", {
         y: -30,
-        // opacity: 0, // Removed to prevent visibility issues on error
+        // opacity: 0, // removed to fix blank screen
         duration: 1,
         ease: "power3.out"
       });
 
       // Cards Stagger Animation
       gsap.from(".dashboard-card", {
-        y: 30,
-        // opacity: 0, // Removed to prevent visibility issues on error
+        y: 40,
+        scale: 0.98,
+        // opacity: 0, // removed to fix blank screen
         duration: 0.8,
         stagger: 0.1,
         ease: "power3.out",
@@ -570,12 +571,15 @@ export default function DashboardPage() {
   };
 
   return (
-    <div ref={containerRef} className="dashboard-container relative min-h-screen bg-slate-50/50 pb-20 overflow-x-hidden">
-      {/* Decorative background blobs */}
-      <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-white/0 to-white/0 overflow-hidden -z-10">
-        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-200/30 rounded-full blur-[100px]" />
-        <div className="absolute top-[10%] right-[-10%] w-[400px] h-[400px] bg-orange-200/30 rounded-full blur-[100px]" />
+    <div ref={containerRef} className="dashboard-container relative min-h-screen bg-[#f8fafc] pb-20 overflow-x-hidden text-slate-900">
+      {/* 🔮 Soft Mesh Gradient Background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
+        <div className="absolute -top-[10%] -left-[10%] w-[50vw] h-[50vw] rounded-full bg-indigo-300/20 blur-[100px]" />
+        <div className="absolute top-[20%] -right-[5%] w-[40vw] h-[40vw] rounded-full bg-blue-300/20 blur-[100px]" />
+        <div className="absolute -bottom-[10%] left-[20%] w-[60vw] h-[60vw] rounded-full bg-violet-300/20 blur-[100px]" />
       </div>
+      {/* Decorative background blobs */}
+      
 
       <div className="container mx-auto p-4 md:p-6 lg:p-8 space-y-8 relative z-10">
         <div className="dashboard-header flex justify-between items-center">
@@ -587,14 +591,14 @@ export default function DashboardPage() {
 
         {/* Ana Metrikler */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 items-stretch">
-          <Card className="dashboard-card h-full flex flex-col bg-white/80 backdrop-blur-md border border-slate-200/60 shadow-lg hover:shadow-xl transition-all duration-300">
+          <Card className="dashboard-card h-full flex flex-col bg-white/70 backdrop-blur-2xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-400">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-slate-500">Toplam Stok</CardTitle>
-              <Package2 className="h-4 w-4 text-slate-400" />
+              <Package2 className="h-4 w-4 text-slate-500" />
             </CardHeader>
             <CardContent className="flex-1 flex flex-col justify-between">
               <div>
-                <div className="text-3xl font-light text-slate-900">{totalInventory}</div>
+                <div className="text-3xl font-light text-slate-800">{totalInventory}</div>
                 <p className="text-xs text-slate-500 mt-1">Tüm ürünlerin toplamı</p>
               </div>
               <div>
@@ -610,21 +614,21 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="dashboard-card h-full flex flex-col bg-white/80 backdrop-blur-md border border-slate-200/60 shadow-lg hover:shadow-xl transition-all duration-300">
+          <Card className="dashboard-card h-full flex flex-col bg-white/70 backdrop-blur-2xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-400">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-slate-500">SKU (Çeşit)</CardTitle>
-              <Filter className="h-4 w-4 text-slate-400" />
+              <Filter className="h-4 w-4 text-slate-500" />
             </CardHeader>
             <CardContent className="flex-1 flex flex-col justify-between">
               <div>
-                <div className="text-3xl font-light text-slate-900">{uniqueProducts}</div>
+                <div className="text-3xl font-light text-slate-800">{uniqueProducts}</div>
                 <p className="text-xs text-slate-500 mt-1">Farklı ürün sayısı (Varyantlı)</p>
               </div>
               <div className="w-full h-1.5 mt-3"></div>
             </CardContent>
           </Card>
 
-          <Card className="dashboard-card h-full flex flex-col bg-orange-50/50 backdrop-blur-md border border-orange-100 shadow-lg hover:shadow-orange-100/50 hover:border-orange-200 transition-all duration-300">
+          <Card className="dashboard-card h-full flex flex-col bg-white/70 backdrop-blur-2xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-400">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-orange-600">Düşük Stok (0-3)</CardTitle>
               <TrendingDown className="h-4 w-4 text-orange-500" />
@@ -640,7 +644,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="dashboard-card h-full flex flex-col bg-emerald-50/50 backdrop-blur-md border border-emerald-100 shadow-lg hover:shadow-emerald-100/50 hover:border-emerald-200 transition-all duration-300">
+          <Card className="dashboard-card h-full flex flex-col bg-white/70 backdrop-blur-2xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-400">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-emerald-600">Yüksek Stok (7+)</CardTitle>
               <TrendingUp className="h-4 w-4 text-emerald-500" />
@@ -656,7 +660,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="dashboard-card h-full flex flex-col bg-sky-50/50 backdrop-blur-md border border-sky-100 shadow-lg hover:shadow-sky-100/50 hover:border-sky-200 transition-all duration-300">
+          <Card className="dashboard-card h-full flex flex-col bg-white/70 backdrop-blur-2xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-400">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-sky-600">Orta Stok (4-6)</CardTitle>
               <Package2 className="h-4 w-4 text-sky-500" />
@@ -679,7 +683,7 @@ export default function DashboardPage() {
 
         {/* Stok Durumu Kartları */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="col-span-1 dashboard-card h-full flex flex-col bg-orange-50/30 backdrop-blur-md border border-orange-100 shadow-md hover:shadow-lg transition-all duration-300">
+          <Card className="col-span-1 dashboard-card h-full flex flex-col bg-white border-slate-100 shadow-sm rounded-2xl hover:shadow-md shadow-md hover:shadow-lg transition-all duration-300">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -690,7 +694,7 @@ export default function DashboardPage() {
                   onClick={() => setShowLowStockFilter(!showLowStockFilter)}
                   className="p-2 hover:bg-orange-100 rounded-full transition-colors"
                 >
-                  <Filter className={`h-4 w-4 ${showLowStockFilter ? 'text-orange-600' : 'text-gray-400'}`} />
+                  <Filter className={`h-4 w-4 ${showLowStockFilter ? 'text-orange-600' : 'text-slate-400'}`} />
                 </button>
               </div>
               {showLowStockFilter && (
@@ -828,7 +832,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="col-span-1 dashboard-card h-full flex flex-col bg-green-50/30 backdrop-blur-md border border-green-100 shadow-md hover:shadow-lg transition-all duration-300">
+          <Card className="col-span-1 dashboard-card h-full flex flex-col bg-white border-slate-100 shadow-sm rounded-2xl hover:shadow-md shadow-md hover:shadow-lg transition-all duration-300">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -839,7 +843,7 @@ export default function DashboardPage() {
                   onClick={() => setShowHighStockFilter(!showHighStockFilter)}
                   className="p-2 hover:bg-green-100 rounded-full transition-colors"
                 >
-                  <Filter className={`h-4 w-4 ${showHighStockFilter ? 'text-green-600' : 'text-gray-400'}`} />
+                  <Filter className={`h-4 w-4 ${showHighStockFilter ? 'text-green-600' : 'text-slate-400'}`} />
                 </button>
               </div>
               {showHighStockFilter && (
@@ -977,7 +981,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="col-span-1 dashboard-card h-full flex flex-col bg-blue-50/30 backdrop-blur-md border border-blue-100 shadow-md hover:shadow-lg transition-all duration-300">
+          <Card className="col-span-1 dashboard-card h-full flex flex-col bg-white border-slate-100 shadow-sm rounded-2xl hover:shadow-md shadow-md hover:shadow-lg transition-all duration-300">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -988,7 +992,7 @@ export default function DashboardPage() {
                   onClick={() => setShowMediumStockFilter(!showMediumStockFilter)}
                   className="p-2 hover:bg-blue-100 rounded-full transition-colors"
                 >
-                  <Filter className={`h-4 w-4 ${showMediumStockFilter ? 'text-blue-600' : 'text-gray-400'}`} />
+                  <Filter className={`h-4 w-4 ${showMediumStockFilter ? 'text-blue-600' : 'text-slate-400'}`} />
                 </button>
               </div>
               {showMediumStockFilter && (
@@ -1130,7 +1134,7 @@ export default function DashboardPage() {
         {/* Grafikler */}
         <div className="grid grid-cols-1 gap-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="dashboard-card h-full flex flex-col bg-white/80 backdrop-blur-md border border-slate-200/60 shadow-lg hover:shadow-xl transition-all duration-300">
+            <Card className="dashboard-card h-full flex flex-col bg-white/70 backdrop-blur-2xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-400">
               <CardHeader>
                 <CardTitle>Marka Bazında Satış Dağılımı</CardTitle>
                 <p className="text-sm text-muted-foreground">
@@ -1147,7 +1151,7 @@ export default function DashboardPage() {
                         const percentage = ((total / totalSales) * 100).toFixed(1);
 
                         return (
-                          <div key={index} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100">
+                          <div key={index} className="flex items-center justify-between p-5 hover:bg-slate-50/50 transition-colors bg-blue-50 rounded-lg border border-blue-100">
                             <div>
                               <p className="font-medium text-blue-900">{brand}</p>
                               <div className="flex gap-2 text-sm text-blue-600">
@@ -1168,7 +1172,7 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            <Card className="dashboard-card h-full flex flex-col bg-white/80 backdrop-blur-md border border-slate-200/60 shadow-lg hover:shadow-xl transition-all duration-300">
+            <Card className="dashboard-card h-full flex flex-col bg-white/70 backdrop-blur-2xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-400">
               <CardHeader>
                 <CardTitle>Sezon Bazında Satış Dağılımı</CardTitle>
                 <p className="text-sm text-muted-foreground">
@@ -1185,7 +1189,7 @@ export default function DashboardPage() {
                         const percentage = ((total / totalSales) * 100).toFixed(1);
 
                         return (
-                          <div key={index} className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-100">
+                          <div key={index} className="flex items-center justify-between p-5 hover:bg-slate-50/50 transition-colors bg-green-50 rounded-lg border border-green-100">
                             <div>
                               <p className="font-medium text-green-900">{season}</p>
                               <div className="flex gap-2 text-sm text-green-600">
@@ -1206,7 +1210,7 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            <Card className="dashboard-card h-full flex flex-col bg-white/80 backdrop-blur-md border border-slate-200/60 shadow-lg hover:shadow-xl transition-all duration-300">
+            <Card className="dashboard-card h-full flex flex-col bg-white/70 backdrop-blur-2xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-400">
               <CardHeader>
                 <CardTitle>Ürün Grubu Bazında Satış Dağılımı</CardTitle>
                 <p className="text-sm text-muted-foreground">
@@ -1223,7 +1227,7 @@ export default function DashboardPage() {
                         const percentage = ((total / totalSales) * 100).toFixed(1);
 
                         return (
-                          <div key={index} className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-100">
+                          <div key={index} className="flex items-center justify-between p-5 hover:bg-slate-50/50 transition-colors bg-purple-50 rounded-lg border border-purple-100">
                             <div>
                               <p className="font-medium text-purple-900">{group}</p>
                               <div className="flex gap-2 text-sm text-purple-600">
@@ -1246,7 +1250,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="dashboard-card h-full flex flex-col bg-white/80 backdrop-blur-md border border-slate-200/60 shadow-lg hover:shadow-xl transition-all duration-300">
+            <Card className="dashboard-card h-full flex flex-col bg-white/70 backdrop-blur-2xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-400">
               <CardHeader>
                 <CardTitle>Marka Bazında Stok Dağılımı</CardTitle>
                 <p className="text-sm text-muted-foreground">
@@ -1361,7 +1365,7 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            <Card className="dashboard-card h-full flex flex-col bg-white/80 backdrop-blur-md border border-slate-200/60 shadow-lg hover:shadow-xl transition-all duration-300">
+            <Card className="dashboard-card h-full flex flex-col bg-white/70 backdrop-blur-2xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-400">
               <CardHeader>
                 <CardTitle>Sezon Bazında Stok Dağılımı</CardTitle>
                 <p className="text-sm text-muted-foreground">
@@ -1377,6 +1381,19 @@ export default function DashboardPage() {
                     padAngle={0.7}
                     cornerRadius={3}
                     activeOuterRadiusOffset={8}
+                    theme={{
+                      textColor: '#94a3b8',
+                      tooltip: {
+                        container: {
+                          background: '#1e293b',
+                          color: '#f1f5f9',
+                          fontSize: 12,
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                        }
+                      }
+                    }}
+
                     colors={{ scheme: 'category10' }}
                     borderWidth={1}
                     borderColor={{
@@ -1459,7 +1476,7 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            <Card className="dashboard-card h-full flex flex-col bg-white/80 backdrop-blur-md border border-slate-200/60 shadow-lg hover:shadow-xl transition-all duration-300">
+            <Card className="dashboard-card h-full flex flex-col bg-white/70 backdrop-blur-2xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-400">
               <CardHeader>
                 <CardTitle>Sezon Bazında Grup Dağılımı</CardTitle>
                 <p className="text-sm text-muted-foreground">
@@ -1475,6 +1492,19 @@ export default function DashboardPage() {
                     padAngle={0.7}
                     cornerRadius={3}
                     activeOuterRadiusOffset={8}
+                    theme={{
+                      textColor: '#94a3b8',
+                      tooltip: {
+                        container: {
+                          background: '#1e293b',
+                          color: '#f1f5f9',
+                          fontSize: 12,
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                        }
+                      }
+                    }}
+
                     colors={{ scheme: 'category10' }}
                     borderWidth={1}
                     borderColor={{
@@ -1557,7 +1587,7 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            <Card className="col-span-1 dashboard-card h-full flex flex-col bg-purple-50/30 backdrop-blur-md border border-purple-100 shadow-md hover:shadow-lg transition-all duration-300">
+            <Card className="col-span-1 dashboard-card h-full flex flex-col bg-white border-slate-100 shadow-sm rounded-2xl hover:shadow-md shadow-md hover:shadow-lg transition-all duration-300">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg flex items-center gap-2">
@@ -1568,7 +1598,7 @@ export default function DashboardPage() {
                     onClick={() => setShowProductGroupFilter(!showProductGroupFilter)}
                     className="p-2 hover:bg-purple-100 rounded-full transition-colors"
                   >
-                    <Filter className={`h-4 w-4 ${showProductGroupFilter ? 'text-purple-600' : 'text-gray-400'}`} />
+                    <Filter className={`h-4 w-4 ${showProductGroupFilter ? 'text-purple-600' : 'text-slate-400'}`} />
                   </button>
                 </div>
                 {showProductGroupFilter && (
@@ -1593,7 +1623,7 @@ export default function DashboardPage() {
                       })
                       .sort((a, b) => b.value - a.value)
                       .map((group, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-100">
+                        <div key={index} className="flex items-center justify-between p-5 hover:bg-slate-50/50 transition-colors bg-purple-50 rounded-lg border border-purple-100">
                           <div>
                             <p className="font-medium text-purple-900">{group.id}</p>
                             <div className="flex gap-2 text-sm text-purple-600">
@@ -1616,7 +1646,7 @@ export default function DashboardPage() {
 
         {/* Marka Stok Detayları - Kaydırılabilir Liste */}
         <div className="mt-8">
-          <Card className="w-full dashboard-card bg-white/80 backdrop-blur-md border border-slate-200/60 shadow-lg hover:shadow-xl transition-all duration-300">
+          <Card className="w-full dashboard-card bg-white border border-slate-100 shadow-sm rounded-2xl hover:shadow-md transition-all duration-300">
             <CardHeader>
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
